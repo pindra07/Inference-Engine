@@ -642,3 +642,45 @@ plus one thin binary per model and a script that compares all backends:
 Commands in detail: `perf/README.md`. What each number means and how to
 compare fairly (warmup, greedy default, two performance regimes with our
 M4 data): `SPEC/11_BENCHMARKING.md`.
+
+### Measured results (Apple M4, 16 GB, Release build, greedy, warmup 16, 3 repeats)
+
+Regenerate any time: `./perf/compare_backends.sh llama2 "Once upon a time" 200`.
+
+**Llama-2 — stories15M (60 MB, prompt "Once upon a time", 200 tokens):**
+
+| Backend | Avg decode tok/s | Best decode tok/s | TTFT (mean) |
+|---|---|---|---|
+| `reference` (built-in) | 175.9 | 194.7 | 25.7 ms |
+| `llama2/cpu_baseline` | 197.3 | 198.6 | 24.6 ms |
+| `llama2/windows_intel` (scalar on ARM) | 349.9 | 352.2 | 13.8 ms |
+| `llama2/mac_mseries` ⭐ | 914.0 | 921.0 | 4.8 ms |
+
+**Gemma2 — tiny-random (8 MB, prompt "Hello", 50 tokens):**
+
+| Backend | Avg decode tok/s | Best decode tok/s | TTFT (mean) |
+|---|---|---|---|
+| `reference` (built-in) | 944.4 | 946.5 | 1.7 ms |
+| `gemma2/cpu_baseline` | 948.6 | 951.0 | 1.6 ms |
+| `gemma2/mac_mseries` | 917.0 | 926.7 | 1.8 ms |
+| `gemma2/windows_intel` (scalar on ARM) | 1070.0 | 1076.9 | 1.4 ms |
+
+### What "good" looks like
+
+- **Mac plugin ≈ 900+ tok/s on stories15M** is the streaming ceiling
+  (~60 MB/token ⇒ ~55 GB/s) — a good result means you're at it, and no
+  kernel tweak will go meaningfully past it.
+- **Scalar backends at 150–350 tok/s** on the same model is healthy
+  (overhead-bound); below ~100 means something regressed — bisect with
+  `cpu_baseline` as the reference.
+- **Tiny models (≈8 MB) saturate everything near ~1000 tok/s.** All
+  backends tying (as in the Gemma2 table) is *expected*, not a signal —
+  never claim a backend win from a tiny model; re-run on the biggest
+  checkpoint that fits.
+- **Projecting to 7B-FP32 (~26 GB/token):** expect ~2–4 tok/s on *every*
+  backend on this class of machine. That's the bandwidth wall, and the
+  reason quantization is `recommendation.md` #1 — it is the only change
+  that moves that number (~4× for INT8).
+- **Avg vs best:** report both. They should agree within ~10%; a wide gap
+  (see `reference` above: 175.9 vs 194.7) means one repeat caught machine
+  noise — re-run before concluding anything.
