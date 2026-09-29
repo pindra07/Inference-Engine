@@ -1,0 +1,13 @@
+build/
+# Model checkpoints/tokenizers live next to their model; never commit them.
+models/*/weights/*.bin
+models/*/weights/*.pt
+models/*/weights/*.model
+models/*/weights/*.safetensors
+# Benchmark result CSVs are local measurements, not source.
+perf/results/*.csv
+*.dylib
+*.so
+*.dll
+__pycache__/
+.DS_Store
