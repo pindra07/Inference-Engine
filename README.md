@@ -1,5 +1,9 @@
 # Inference — modular C++ inference library with hardware plugins
 
+<p align="center">
+  <img src="assets/inference_github.png" alt="inference engine overview">
+</p>
+
 A small, dependency-free (C++17, no third-party libraries) inference engine
 for modern decoder-only LLMs, designed so **each model family gets an engine
 folder** and **each hardware target gets a plugin**. Today the repo ships two
